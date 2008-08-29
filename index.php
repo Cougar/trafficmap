@@ -13,7 +13,7 @@ if (is_dir("maps")) {
 	$fpdir = opendir("maps");
 	$i = 0;
 	while ($file = readdir($fpdir)) {
-		if (! preg_match("/\.tki$/", $file)
+		if (! preg_match("/\.tki$/", $file))
 			continue;
 		$files[$i] = "$file";
 		$i++;
