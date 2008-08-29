@@ -194,7 +194,8 @@ if ($_GET['type'] == "png") {
 	fclose($fp);
 
 } else if ($_GET['type'] == "map") {
-	$htmlbody .= '<HTML>
+	$htmlbody .= '<!-- $Id$ -->
+<HTML>
 <HEAD>
 <TITLE>TrafficMap</TITLE>
 <LINK REL="shortcut icon" HREF="trafficmap.ico">
