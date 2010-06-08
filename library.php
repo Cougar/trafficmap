@@ -14,8 +14,10 @@ $mapscale = 1;
 
 $map = $_GET['map'];
 $sterile_map = preg_replace( "/[^\w\.-]+/", "_", $map);
+$type = $_GET['type'];
+$sterile_type = preg_replace( "/[^\w\.-]+/", "_", $type);
 $tki_filename = $tkidir . '/' . $sterile_map . '.tki';
-$cache_filename = $cachedir . '/trafficmap_cache_' . $sterile_map . '.html';
+$cache_filename = $cachedir . '/trafficmap_' . $sterile_map . '_' . $sterile_type . '.cache';
 
 if (isset($statsmodule) && file_exists('./class_stats_' . $statsmodule . '.php')) {
 	require_once './class_stats_' . $statsmodule . '.php';
@@ -66,10 +68,10 @@ function ifspeed2width($speed)
 	return ($linkwidths[$i][1] * $mapscale);
 }
 
-function plot_link_png($x1, $y1, $x2, $y2, $loadin, $loadout, $width, $linkcount, $drawinglink, $name)
+function plot_link_png($x1, $y1, $x2, $y2, $loadin, $loadout, $width, $linkcount, $drawinglink, $name, $links_space)
 {
 	global $img;
-	$c = calculate_multiple_line ($x1, $y1, $x2, $y2, $linkcount, $drawinglink);
+	$c = calculate_multiple_line ($x1, $y1, $x2, $y2, $linkcount, $drawinglink, $links_space);
 	$rgb = get_load_rgb($loadin);
 	$icolor = ImageColorAllocate($img, $rgb[0], $rgb[1], $rgb[2]);
 	$rgb = get_load_rgb($loadout);
@@ -128,9 +130,9 @@ function plot_link_png($x1, $y1, $x2, $y2, $loadin, $loadout, $width, $linkcount
 	}
 }
 
-function plot_link_map($x1, $y1, $x2, $y2, $width, $linkcount, $drawinglink, $name)
+function plot_link_map($x1, $y1, $x2, $y2, $width, $linkcount, $drawinglink, $name, $links_space)
 {
-	$c = calculate_multiple_line ($x1, $y1, $x2, $y2, $linkcount, $drawinglink);
+	$c = calculate_multiple_line ($x1, $y1, $x2, $y2, $linkcount, $drawinglink, $links_space);
 	overlib_arrow($c['x1'], $c['y1'], middle($c['x1'], $c['x2']), middle($c['y1'], $c['y2']), $width, $name);
 	overlib_arrow($c['x2'], $c['y2'], middle($c['x1'], $c['x2']), middle($c['y1'], $c['y2']), $width, $name);
 }
@@ -198,9 +200,9 @@ function calculate_line_move($x1, $y1, $x2, $y2, $delta)
 	return ($d);
 }
 
-function calculate_multiple_line ($x1, $y1, $x2, $y2, $linkcount, $drawinglink)
+function calculate_multiple_line ($x1, $y1, $x2, $y2, $linkcount, $drawinglink, $links_space)
 {
-	global $links_space, $mapscale;
+	global $mapscale;
 
 	$d[0] = 0;
 	$d[1] = 0;
@@ -279,8 +281,10 @@ function overlib_arrow($x1, $y1, $x2, $y2, $w, $name)
 		$ollink = $stats->getollink($name);
 	}
 
-	$caption = "$name | ";
+	$caption = "$name: ";
+	$caption = $stats->getolcaption($name, $caption);
 	if (isset($tki_attribute[$tki_node1[$name]]['name'])) {
+		$caption .= "<br>A:";
 		if ($tki_attribute[$tki_node1[$name]]['name'] == 'HIDDEN') {
 			if (isset($tki_attribute[$name]['ifaliasA'])) {
 				$caption .= " " . $tki_attribute[$name]['ifaliasA'];
@@ -290,10 +294,13 @@ function overlib_arrow($x1, $y1, $x2, $y2, $w, $name)
 			if (isset($tki_attribute[$name]['portA'])) {
 				$caption .= " " . $tki_attribute[$name]['portA'];
 			}
+			if (isset($tki_attribute[$name]['ifaliasA'])) {
+				$caption .= " (" . $tki_attribute[$name]['ifaliasA'] . ")";
+			}
 		}
 	}
-	$caption .= ' - ';
 	if (isset($tki_attribute[$tki_node2[$name]]['name'])) {
+		$caption .= "<br>B:";
 		if ($tki_attribute[$tki_node2[$name]]['name'] == 'HIDDEN') {
 			if (isset($tki_attribute[$name]['ifaliasB'])) {
 				$caption .= " " . $tki_attribute[$name]['ifaliasB'];
@@ -303,13 +310,15 @@ function overlib_arrow($x1, $y1, $x2, $y2, $w, $name)
 			if (isset($tki_attribute[$name]['portB'])) {
 				$caption .= " " . $tki_attribute[$name]['portB'];
 			}
+			if (isset($tki_attribute[$name]['ifaliasB'])) {
+				$caption .= " (" . $tki_attribute[$name]['ifaliasB'] . ")";
+			}
 		}
 	}
 
 	if (($caption == ' - ') && ($olbody == '') && ($ollink == ''))
 		return;
 
-	$caption = $stats->getolcaption($name, $caption);
 
 	$htmlbody .= '<AREA SHAPE="poly" COORDS="' . implode(",", $points) . '"';
 	$htmlbody .= ' ONMOUSEOVER="return overlib(\'' . $olbody . '\', CAPTION, \'' . $caption . '\', CENTER, FIXX, 120, OFFSETY, 32);" onmouseout="return nd();"';

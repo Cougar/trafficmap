@@ -27,30 +27,29 @@
 require "config.php";
 require "library.php";
 
+if (isset($cache_filename)
+    && file_exists($cache_filename)
+    && (filemtime($cache_filename) > filemtime($tki_filename))
+    && (floor(filemtime($cache_filename) / 300) == floor(time() / 300))) {
+	Header("Cache-Control: no-cache, must-revalidate");
+	Header("Pragma: no-cache");
+	if ($_GET['type'] == "map") {
+		Header("Content-type: text/html");
+		echo "<!-- start cached copy -->\n";
+	} else if ($_GET['type'] == "png") {
+		Header("Content-type: image/png");
+	} else {
+		die ("Unknown map type");
+	}
+	$fp = fopen($cache_filename, 'r');
+	$content = fread($fp, filesize($cache_filename));
+	echo $content;
+	exit;
+}
+
 $img = '';
 
 $htmlbody = '';
-
-if ($_GET['type'] == "map") {
-	Header("Cache-Control: no-cache, must-revalidate");
-	Header("Pragma: no-cache");
-	Header("Content-type: text/html");
-
-	# check cache HTML file
-
-//if(0) {
-	if (isset($cache_filename)
-	    && file_exists($cache_filename)
-	    && (filemtime($cache_filename) > filemtime($tki_filename))
-	    && (filemtime($cache_filename) > (time() - 300))) {
-		$fp = fopen($cache_filename, 'r');
-		$htmlbody = fread($fp, filesize($cache_filename));
-		echo $htmlbody;
-		echo "<!-- cached copy -->\n";
-		exit;
-	}
-//} // if(0)
-}
 
 /*
  * read_tki
@@ -74,6 +73,12 @@ while(! feof($fp) ) {
 	} else if (preg_match("/^set (\S+) \[ ined -noupdate create NODE \]$/", $line, $matches)) {
 		$tki_type[$matches[1]] = "NODE";
 	} else if (preg_match("/^set (\S+) \[ ined -noupdate create LINK [\$](\S+) [\$](\S+)  \]$/", $line, $matches)) {
+		if ($tki_type[$matches[2]] != "NODE") {
+			error_log("ERROR: src ". $matches[2] . " not defined for " . $matches[1] . " yet");
+		}
+		if ($tki_type[$matches[3]] != "NODE") {
+			error_log("ERROR: dst ". $matches[3] . " not defined for " . $matches[1] . " yet");
+		}
 		$tki_type[$matches[1]] = "LINK";
 		$tki_node1[$matches[1]] = $matches[2];
 		$tki_node2[$matches[1]] = $matches[3];
@@ -88,20 +93,26 @@ while(! feof($fp) ) {
 		$tki_x2[$matches[1]] = $matches[4];
 		$tki_y2[$matches[1]] = $matches[5];
 	} else if (preg_match("/^ined -noupdate move [\$](\S+) ([\d\.]+) ([\d\.]+)$/", $line, $matches)) {
-		$tki_posx[$matches[1]] = $matches[2];
-		$tki_posy[$matches[1]] = $matches[3];
-		if ($matches[2] < $g_xmin)
-			$g_xmin = $matches[2];
-		if (isset($tki_x2[$matches[1]]) && (($matches[2] + $tki_x2[$matches[1]]) < $g_xmin))
-			$g_xmin = $matches[2] + $tki_x2[$matches[1]];
-		if ($matches[2] > $g_xmax)
-			$g_xmax = $matches[2];
-		if (isset($tki_x2[$matches[1]]) && (($matches[2] + $tki_x2[$matches[1]]) > $g_xmax))
-			$g_xmax = $matches[2] + $tki_x2[$matches[1]];
-		if ($matches[3] < $g_ymin)
-			$g_ymin = $matches[3];
-		if ($matches[3] > $g_ymax)
-			$g_ymax = $matches[3];
+		$object = $matches[1];
+		$object_x = $matches[2];
+		$object_y = $matches[3];
+		$tki_posx[$object] = $object_x;
+		$tki_posy[$object] = $object_y;
+		if (preg_match("/^reference/", $object)) {
+			continue;
+		}
+		if ($object_x < $g_xmin)
+			$g_xmin = $object_x;
+		if (isset($tki_x2[$object]) && (($object_x + $tki_x2[$object]) < $g_xmin))
+			$g_xmin = $object_x + $tki_x2[$object];
+		if ($object_x > $g_xmax)
+			$g_xmax = $object_x;
+		if (isset($tki_x2[$object]) && (($object_x + $tki_x2[$object]) > $g_xmax))
+			$g_xmax = $object_x + $tki_x2[$object];
+		if ($object_y < $g_ymin)
+			$g_ymin = $object_y;
+		if ($object_y > $g_ymax)
+			$g_ymax = $object_y;
 	} else if (preg_match("/^ined -noupdate font [\$](\S+) (.+)$/", $line, $matches)) {
 		$tki_font[$matches[1]] = $matches[2];
 	} else if (preg_match("/^ined -noupdate color [\$](\S+) (.+)$/", $line, $matches)) {
@@ -206,6 +217,8 @@ if ($_GET['type'] == "png") {
 <IMG SRC="' . $_SERVER['PHP_SELF'] . '?type=png&map=' . $_GET['map'] . '" BORDER=0 ALT="" USEMAP="#trafficmap_' . $_GET['map'] . '">
 <BR><BR><BR><BR><BR><BR><BR><BR><BR><BR>
 <BR><BR><BR><BR><BR><BR><BR><BR><BR><BR>
+<BR><BR><BR><BR><BR><BR><BR><BR><BR><BR>
+<BR><BR><BR><BR><BR><BR><BR><BR><BR><BR>
 <MAP NAME="trafficmap_' . $_GET['map'] . '">
 ';
 }
@@ -281,6 +294,13 @@ if ($_GET['type'] == "png") {
 #		if (isset($tki_attribute[$name]['linkcount']))
 #			$width *= $tki_attribute[$name]['linkcount'] * 0.75;
 
+		# put links closer if possible to increase number of links
+		# between two nodes (up 10 in Metroo setup)
+		$tmp_links_space = $links_space;
+		if (($tki_name[$node1] != "HIDDEN") && ($tki_name[$node2] != "HIDDEN")) {
+			$tmp_links_space = $links_space / 2;
+		}
+
 		if ($_GET['type'] == 'png') {
 			if (isset($stats)) {
 				$load = $stats->getloads($name);
@@ -288,9 +308,9 @@ if ($_GET['type'] == "png") {
 				$load[0] = 0;
 				$load[1] = 0;
 			}
-			plot_link_png($x1, $y1, $x2, $y2, $load[0], $load[1], $width, $linkcount, $drawinglink, $name);
+			plot_link_png($x1, $y1, $x2, $y2, $load[0], $load[1], $width, $linkcount, $drawinglink, $name, $tmp_links_space);
 		} else if ($_GET['type'] == 'map') {
-			plot_link_map($x1, $y1, $x2, $y2, $width, $linkcount, $drawinglink, $name);
+			plot_link_map($x1, $y1, $x2, $y2, $width, $linkcount, $drawinglink, $name, $tmp_links_space);
 		}
 	}
 
@@ -391,13 +411,17 @@ $box2 = imagettftext($tmpimg, $fontsize, 0, $x, $y, $black, $font, $text);
 ImageCopyMerge($img, $tmpimg, 20, 100, $box[6], $box[7] , $box[2] - $box[0] + 1, $box[1] - $box[5] + 1, 80);
 } # if (0)
 
+Header("Cache-Control: no-cache, must-revalidate");
+Header("Pragma: no-cache");
 if ($_GET['type'] == "png") {
-	Header("Cache-Control: no-cache, must-revalidate");
-	Header("Pragma: no-cache");
 	Header("Content-type: image/png");
 	ImagePng($img, NULL, 9);
+	if (isset($cache_filename)) {	# cache image file
+		ImagePng($img, $cache_filename , 9);
+	}
 	ImageDestroy($img);
 } else if ($_GET['type'] == "map") {
+	Header("Content-type: text/html");
 	$htmlbody .= '</MAP>
 </BODY>
 </HTML>
@@ -410,5 +434,7 @@ if ($_GET['type'] == "png") {
 		fwrite($fp, $htmlbody);
 		fclose($fp);
 	}
+} else {
+	die ("Unknown map type");
 }
 ?>
