@@ -61,7 +61,7 @@ $scalecolors = array(
 	array(55,     0, 240,   0),
 	array(65,   240, 240,   0),
 	array(80,   255, 64,   0),
-	array(95,  255,   0,   0)	# 95% bets effort (5% network control)
+	array(95,  255,   0,   0)	# 95% best effort (5% network control)
 );
 
 //
