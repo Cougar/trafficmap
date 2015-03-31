@@ -383,6 +383,7 @@ ImageCopyResampled($img, $img1, X($tki_posx[$name]) - $w*$iconscale/2, Y($tki_po
 			}
 		}
 	}
+	plot_bg_right_string($img, 2, $g_x, $g_y - 14, date(DATE_ISO8601, time()), $labelcolor, $c_white);
 }
 
 if (0) {

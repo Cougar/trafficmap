@@ -144,6 +144,13 @@ function plot_bg_center_string($img, $size, $xc, $y, $text, $color, $c_white)
 	plot_bg_string($img, $size, $x, $y, $text, $color, $c_white);
 }
 
+function plot_bg_right_string($img, $size, $xr, $y, $text, $color, $c_white)
+{
+	$pixelw = strlen($text) * 6;
+	$x = $xr - floor($pixelw) - 1;
+	plot_bg_string($img, $size, $x, $y, $text, $color, $c_white);
+}
+
 function plot_bg_string($img, $size, $x, $y, $text, $color, $c_white)
 {
 	ImageString($img, $size, $x - 1, $y - 1, $text, $c_white);
