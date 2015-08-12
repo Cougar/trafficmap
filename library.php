@@ -83,6 +83,7 @@ function plot_link_png($x1, $y1, $x2, $y2, $loadin, $loadout, $width, $linkcount
 	global $c_white, $c_black;
 	$node2 = $tki_node2[$name];
 	if (($tki_name[$node2] == "HIDDEN") && isset($tki_attribute[$name]['ifaliasB'])) {
+		$frame = 1;
 		$text = $tki_attribute[$name]['ifaliasB'];
 		$pixelw = strlen($text) * 6;
 		$xsize = $pixelw + 3;
@@ -95,17 +96,30 @@ function plot_link_png($x1, $y1, $x2, $y2, $loadin, $loadout, $width, $linkcount
 		$middle = ($xsize - 1) / 2;
 		$tmpim = ImageCreate($xsize, $ysize);
 #		if (isset($tki_attribute[$name]['maplink'])) {
-		$fgcolor = ImageColorAllocate($tmpim, 0, 0, 0);
+		if (isset($tki_attribute[$name]['labelfg'])) {
+			$hexcolor = str_split($tki_attribute[$name]['labelfg'], 2);
+			ImageColorAllocate($tmpim, hexdec("0x{$hexcolor[0]}"), hexdec("0x{$hexcolor[1]}"), hexdec("0x{$hexcolor[2]}"));
+		} else {
+			$fgcolor = ImageColorAllocate($tmpim, 0, 0, 0);
+		}
 		if (isset($tki_attribute[$name]['statusdown'])) {
 			$bgcolor = ImageColorAllocate($tmpim, 255, 0, 0);
 		} else {
-			$bgcolor = ImageColorAllocate($tmpim, 255, 255, 255);
+			if (isset($tki_attribute[$name]['labelbg'])) {
+				$hexcolor = str_split($tki_attribute[$name]['labelbg'], 2);
+				$bgcolor = ImageColorAllocate($tmpim, hexdec("0x{$hexcolor[0]}"), hexdec("0x{$hexcolor[1]}"), hexdec("0x{$hexcolor[2]}"));
+				$frame = 0;
+			} else {
+				$bgcolor = ImageColorAllocate($tmpim, 255, 255, 255);
+			}
 		}
 #		$transparent = ImageColorAllocate($tmpim, 0, 254, 254);
 #		ImageColorTransparent($tmpim, $transparent);
 #		ImageFill($tmpim, 0, 0, $transparent);
 		ImageFilledRectangle($tmpim, 0 + 4, $middle - 7, $xsize - 1 - 4, $middle + 7, $bgcolor);
-		ImageRectangle($tmpim, 0 + 4, $middle - 7, $xsize - 1 - 4, $middle + 7, $fgcolor);
+		if ($frame) {
+			ImageRectangle($tmpim, 0 + 4, $middle - 7, $xsize - 1 - 4, $middle + 7, $fgcolor);
+		}
 		ImageString($tmpim, 2, 2 + 4, $middle - 7, $text, $fgcolor);
 		$rotate = -1;
 		if ($c['x1'] == $c['x2'])
