@@ -223,12 +223,12 @@ if ($_GET['type'] == "png") {
 <BODY BGCOLOR=#FFFFFF LEFTMARGIN=0 TOPMARGIN=0 MARGINWIDTH=0 MARGINHEIGHT=0>
 <DIV id="overDiv" style="position:absolute; visibility:hidden; z-index:1000;"></DIV>
 <SCRIPT language="JavaScript" src="overlib_mini.js"><!-- overLIB (c) Erik Bosrup --></SCRIPT>
-<IMG SRC="' . $_SERVER['PHP_SELF'] . '?type=png&map=' . $_GET['map'] . '" BORDER=0 ALT="" USEMAP="#trafficmap_' . $_GET['map'] . '">
+<IMG SRC="' . $_SERVER['PHP_SELF'] . '?type=png&map=' . $sterile_map . '" BORDER=0 ALT="" USEMAP="#trafficmap_' . $sterile_map . '">
 <BR><BR><BR><BR><BR><BR><BR><BR><BR><BR>
 <BR><BR><BR><BR><BR><BR><BR><BR><BR><BR>
 <BR><BR><BR><BR><BR><BR><BR><BR><BR><BR>
 <BR><BR><BR><BR><BR><BR><BR><BR><BR><BR>
-<MAP NAME="trafficmap_' . $_GET['map'] . '">
+<MAP NAME="trafficmap_' . $sterile_map . '">
 ';
 }
 
