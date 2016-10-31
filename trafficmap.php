@@ -132,6 +132,15 @@ while(! feof($fp) ) {
 			$matches[3] = $matches2[1];
 		$tki_attribute[$matches[1]][$matches[2]] = $matches[3];
 	} else if (preg_match("/^ined -noupdate attribute [\$](\S+) (\S+) (.+)$/", $line, $matches)) {
+		if ($matches[2] == "ignore") {
+			unset($tki_type[$matches[1]]);
+			unset($tki_label[$matches[1]]);
+			unset($tki_posx[$matches[1]]);
+			unset($tki_posy[$matches[1]]);
+			unset($tki_name[$matches[1]]);
+			unset($tki_attribute[$matches[1]]);
+			continue;
+		}
 		if (preg_match("/^\{(.*)\}$/", $matches[3], $matches2))
 			$matches[3] = $matches2[1];
 		$tki_attribute[$matches[1]][$matches[2]] = $matches[3];
@@ -233,6 +242,10 @@ if ($_GET['type'] == "png") {
 		$node1 = $tki_node1[$name];
 		$node2 = $tki_node2[$name];
 
+		if ($tki_type[$node1] == "" || $tki_type[$node2] == "") {
+			continue;
+		}
+
 		$linkcount = $tki_linkcount[$node1][$node2] + 0;
 		if (! isset($drawedlinks[$node1][$node2]))
 			$drawedlinks[$node1][$node2] = 0;
@@ -297,7 +310,7 @@ if ($_GET['type'] == "png") {
 		# put links closer if possible to increase number of links
 		# between two nodes (up 10 in Metroo setup)
 		$tmp_links_space = $links_space;
-		if (($tki_name[$node1] != "HIDDEN") && ($tki_name[$node2] != "HIDDEN")) {
+		if (! isset($tki_attribute[$node1]['virtual']) && ! isset($tki_attribute[$node2]['virtual'])) {
 			$tmp_links_space = $links_space / 2;
 		}
 
@@ -358,7 +371,7 @@ if ($_GET['type'] == "png") {
 	while (list($name, ) = each ($types)) {
 		if ($tki_type[$name] != "NODE")
 			continue;
-		if (isset($tki_attribute[$name]['name']) && ($tki_attribute[$name]['name'] == 'HIDDEN'))
+		if (isset($tki_attribute[$name]['virtual']))
 			continue;
 		$filename = get_icon_filename("png", $tki_icon[$name], "cisco");
 		$img1 = @ImageCreateFromPNG($filename);

@@ -70,6 +70,10 @@ function ifspeed2width($speed)
 
 function plot_link_png($x1, $y1, $x2, $y2, $loadin, $loadout, $width, $linkcount, $drawinglink, $name, $links_space)
 {
+	// links to ignored nodes
+	if (($x1 == -1) || ($y1 == -1) || ($x2 == -1) || ($y2 == -1)) {
+		return;
+	}
 	global $img;
 	$c = calculate_multiple_line ($x1, $y1, $x2, $y2, $linkcount, $drawinglink, $links_space);
 	$rgb = get_load_rgb($loadin);
@@ -82,7 +86,7 @@ function plot_link_png($x1, $y1, $x2, $y2, $loadin, $loadout, $width, $linkcount
 	global $tki_node2, $tki_name, $tki_attribute;
 	global $c_white, $c_black;
 	$node2 = $tki_node2[$name];
-	if (($tki_name[$node2] == "HIDDEN") && isset($tki_attribute[$name]['ifaliasB'])) {
+	if (isset($tki_attribute[$node2]) && isset($tki_attribute[$node2]['virtual']) && isset($tki_attribute[$name]['ifaliasB'])) {
 		$frame = 1;
 		$text = $tki_attribute[$name]['ifaliasB'];
 		$pixelw = strlen($text) * 6;
@@ -146,6 +150,10 @@ function plot_link_png($x1, $y1, $x2, $y2, $loadin, $loadout, $width, $linkcount
 
 function plot_link_map($x1, $y1, $x2, $y2, $width, $linkcount, $drawinglink, $name, $links_space)
 {
+	// links to ignored nodes
+	if (($x1 == -1) || ($y1 == -1) || ($x2 == -1) || ($y2 == -1)) {
+		return;
+	}
 	$c = calculate_multiple_line ($x1, $y1, $x2, $y2, $linkcount, $drawinglink, $links_space);
 	overlib_arrow($c['x1'], $c['y1'], middle($c['x1'], $c['x2']), middle($c['y1'], $c['y2']), $width, $name);
 	overlib_arrow($c['x2'], $c['y2'], middle($c['x1'], $c['x2']), middle($c['y1'], $c['y2']), $width, $name);
@@ -158,10 +166,10 @@ function plot_bg_center_string($img, $size, $xc, $y, $text, $color, $c_white)
 	plot_bg_string($img, $size, $x, $y, $text, $color, $c_white);
 }
 
-function plot_bg_right_string($img, $size, $xr, $y, $text, $color, $c_white)
+function plot_bg_right_string($img, $size, $xc, $y, $text, $color, $c_white)
 {
 	$pixelw = strlen($text) * 6;
-	$x = $xr - floor($pixelw) - 1;
+	$x = $xc - floor($pixelw) - 1;
 	plot_bg_string($img, $size, $x, $y, $text, $color, $c_white);
 }
 
@@ -306,7 +314,7 @@ function overlib_arrow($x1, $y1, $x2, $y2, $w, $name)
 	$caption = $stats->getolcaption($name, $caption);
 	if (isset($tki_attribute[$tki_node1[$name]]['name'])) {
 		$caption .= "<br>A:";
-		if ($tki_attribute[$tki_node1[$name]]['name'] == 'HIDDEN') {
+		if (isset($tki_attribute[$tki_node1[$name]]['virtual'])) {
 			if (isset($tki_attribute[$name]['ifaliasA'])) {
 				$caption .= " " . $tki_attribute[$name]['ifaliasA'];
 			}
@@ -322,7 +330,7 @@ function overlib_arrow($x1, $y1, $x2, $y2, $w, $name)
 	}
 	if (isset($tki_attribute[$tki_node2[$name]]['name'])) {
 		$caption .= "<br>B:";
-		if ($tki_attribute[$tki_node2[$name]]['name'] == 'HIDDEN') {
+		if (isset($tki_attribute[$tki_node2[$name]]['virtual'])) {
 			if (isset($tki_attribute[$name]['ifaliasB'])) {
 				$caption .= " " . $tki_attribute[$name]['ifaliasB'];
 			}
