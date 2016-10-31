@@ -24,7 +24,7 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-require "config.php";
+require "config" . (isset($_GET['config']) ? ("-" . preg_replace( "/[^\w\.-]+/", "_", $_GET['config'])) : "") . ".php";
 require "library.php";
 
 if (isset($cache_filename)
@@ -223,7 +223,7 @@ if ($_GET['type'] == "png") {
 <BODY BGCOLOR=#FFFFFF LEFTMARGIN=0 TOPMARGIN=0 MARGINWIDTH=0 MARGINHEIGHT=0>
 <DIV id="overDiv" style="position:absolute; visibility:hidden; z-index:1000;"></DIV>
 <SCRIPT language="JavaScript" src="overlib_mini.js"><!-- overLIB (c) Erik Bosrup --></SCRIPT>
-<IMG SRC="' . $_SERVER['PHP_SELF'] . '?type=png&map=' . $sterile_map . '" BORDER=0 ALT="" USEMAP="#trafficmap_' . $sterile_map . '">
+<IMG SRC="' . $_SERVER['PHP_SELF'] . '?type=png&map=' . $sterile_map . (isset($_GET['config']) ? '&config=' . $_GET['config'] : '') . '" BORDER=0 ALT="" USEMAP="#trafficmap_' . $sterile_map . '">
 <BR><BR><BR><BR><BR><BR><BR><BR><BR><BR>
 <BR><BR><BR><BR><BR><BR><BR><BR><BR><BR>
 <BR><BR><BR><BR><BR><BR><BR><BR><BR><BR>
