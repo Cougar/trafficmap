@@ -16,8 +16,10 @@ $map = $_GET['map'];
 $sterile_map = preg_replace( "/[^\w\.-]+/", "_", $map);
 $type = $_GET['type'];
 $sterile_type = preg_replace( "/[^\w\.-]+/", "_", $type);
+$config = (isset($_GET['config']) ? $_GET['config'] : '');
+$sterile_config = preg_replace( "/[^\w\.-]+/", "_", $config);
 $tki_filename = $tkidir . '/' . $sterile_map . '.tki';
-$cache_filename = $cachedir . '/trafficmap_' . $sterile_map . '_' . $sterile_type . '.cache';
+$cache_filename = $cachedir . '/trafficmap_' . $sterile_map . '_' . $sterile_config . '_' . $sterile_type . '.cache';
 
 if (isset($statsmodule) && file_exists('./class_stats_' . $statsmodule . '.php')) {
 	require_once './class_stats_' . $statsmodule . '.php';
